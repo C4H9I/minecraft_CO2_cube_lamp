@@ -20,9 +20,9 @@ SoftwareSerial mySerial(MHZ19_RX_PIN, MHZ19_TX_PIN);
 MHZ19 myMHZ19;
 
 // ----- НАСТРОЙКИ RGB СВЕТОДИОДА -----
-#define RED_PIN D2      // GPIO4 - красный
-#define GREEN_PIN D5    // GPIO14 - зеленый
-#define BLUE_PIN D8     // GPIO15 - синий
+#define RED_PIN D2    // GPIO4 - красный
+#define GREEN_PIN D5  // GPIO14 - зеленый
+#define BLUE_PIN D8   // GPIO15 - синий
 
 // ===== НАСТРОЙКИ WI-FI (НЕСКОЛЬКО СЕТЕЙ) =====
 struct WiFiNetwork {
@@ -32,10 +32,10 @@ struct WiFiNetwork {
 
 // Список доступных WiFi сетей
 WiFiNetwork networks[] = {
-  {"ssid1", "passwd1"},
-  {"ssid2", "passwd2"},
-  {"ssid3", "passwd3"},
-  {"ssid4", "passwd4"}
+  { "ssid", "passwd" },
+  { "ssid2", "passwd2" },
+  { "ssid3", "passwd3" }
+
 };
 
 const int networkCount = sizeof(networks) / sizeof(networks[0]);
@@ -43,9 +43,9 @@ int currentNetworkIndex = 0;
 String connectedSSID = "";
 
 // ----- НАСТРОЙКИ TELEGRAM -----
-const char* BOT_TOKEN = "BOT_TOKEN_FROM_BOT_FATHER"; //Токен вота от имени которого будут отправляться сообщения
-const char* CHAT_ID = "TELEGRAM_USER_ID"; //ID пользователя в чат которого будут отправляться сообщения
-const unsigned long SEND_INTERVAL = 3000000;
+const char* BOT_TOKEN = "8517364120:AAEkb5pyhiwufhO2MtnsFW0sgn8TOhr6mwPPg";
+const char* CHAT_ID = "256532826";
+const unsigned long SEND_INTERVAL = 600000; //Раз в 10 минут
 
 // ----- ПЕРЕМЕННЫЕ ДЛЯ RGB -----
 enum LEDMode {
@@ -76,7 +76,7 @@ unsigned long startTime = 0;
 unsigned long lastSendTime = 0;
 bool wifiConnected = false;
 unsigned long lastReconnectAttempt = 0;
-const unsigned long RECONNECT_INTERVAL = 60000; // Попытка переподключения каждую минуту
+const unsigned long RECONNECT_INTERVAL = 60000;  // Попытка переподключения каждую минуту
 
 void setup() {
   Serial.begin(115200);
@@ -97,9 +97,10 @@ void setup() {
   Serial.println("Инициализация OLED дисплея...");
   Wire.begin(D14, D15);
 
-  if(!display.begin(SSD1306_SWITCHCAPVCC, 0x3C)) {
+  if (!display.begin(SSD1306_SWITCHCAPVCC, 0x3C)) {
     Serial.println("Ошибка инициализации SSD1306!");
-    for(;;);
+    for (;;)
+      ;
   }
 
   display.clearDisplay();
@@ -405,14 +406,28 @@ void loop() {
   }
 
   display.display();
+  int test_time = millis() - lastSendTime;
 
   // Отправка в Telegram
   if (wifiConnected && millis() - lastSendTime >= SEND_INTERVAL && co2ppm > 0) {
+    Serial.print("Отправляю в телеграмм");
     sendCO2ToTelegram(co2ppm, temperature);
     lastSendTime = millis();
+  }else{
+    Serial.print("Нет отправлять в telegramm \n");
+    Serial.print("Условие: ");
+    Serial.print(test_time);
+    Serial.print(" >= ");
+    Serial.print(SEND_INTERVAL);
+    Serial.print("  ");
+    Serial.print("Wifi connect: ");
+    Serial.print(wifiConnected);
+    Serial.print(" CO2 ");
+    Serial.print(co2ppm);
+    Serial.print(" \n");
   }
 
-  Serial.println("----------------------------");
+  //Serial.println("----------------------------");
   delay(2000);
 }
 
@@ -421,19 +436,19 @@ void setRGBColor(int red, int green, int blue, int stepR, int stepG, int stepB) 
   analogWrite(RED_PIN, 255 - red);
   analogWrite(GREEN_PIN, 255 - green);
   analogWrite(BLUE_PIN, 255 - blue);
-  Serial.print("!!! Цвет: ");
-  Serial.print(red);
-  Serial.print(" ");
-  Serial.print(green);
-  Serial.print(" ");
-  Serial.print(blue);
-  Serial.print(" SR:");
-  Serial.print(stepR);
-  Serial.print(" SG:");
-  Serial.print(stepG);
-  Serial.print(" SB:");
-  Serial.print(stepB);
-  Serial.println(" !!!");
+  //Serial.print("!!! Цвет: ");
+  //Serial.print(red);
+  //Serial.print(" ");
+  //Serial.print(green);
+  //Serial.print(" ");
+  //Serial.print(blue);
+  //Serial.print(" SR:");
+  //Serial.print(stepR);
+  //Serial.print(" SG:");
+  //Serial.print(stepG);
+  //Serial.print(" SB:");
+  //Serial.print(stepB);
+  //Serial.println(" !!!");
 }
 
 // Глобальные переменные для RGB
@@ -462,10 +477,10 @@ void updateLED() {
         blinkState = !blinkState;
         if (blinkState) {
           setRGBColor(255, 60, 0, stepR, stepG, stepB);
-          Serial.println("Желтый ВКЛ");
+          Serial.println("Желтый ВКЛ \n");
         } else {
           setRGBColor(0, 0, 0, 1, 10, 10);
-          Serial.println("Желтый ВЫКЛ");
+          Serial.println("Желтый ВЫКЛ \n");
         }
         lastBlinkTime = currentMillis;
       }
@@ -476,10 +491,10 @@ void updateLED() {
         blinkState = !blinkState;
         if (blinkState) {
           setRGBColor(255, 0, 0, stepR, stepG, stepB);
-          Serial.println("Красный ВКЛ");
+          Serial.println("Красный ВКЛ\n");
         } else {
           setRGBColor(0, 0, 0, 1, 10, 10);
-          Serial.println("Красный ВЫКЛ");
+          Serial.println("Красный ВЫКЛ \n");
         }
         lastBlinkTime = currentMillis;
       }
@@ -490,24 +505,29 @@ void updateLED() {
 // ===== ФУНКЦИИ ДЛЯ TELEGRAM =====
 void sendToTelegram(String message) {
   if (!wifiConnected || WiFi.status() != WL_CONNECTED) {
-    Serial.println("WiFi не подключен");
+    Serial.println("WiFi не подключен \n");
     return;
+  }else{
+    Serial.println("WiFi подключен \n");
   }
 
   std::unique_ptr<BearSSL::WiFiClientSecure> client(new BearSSL::WiFiClientSecure);
   client->setInsecure();
   HTTPClient https;
 
-  String url = "https://api.telegram.org/bot" + String(BOT_TOKEN) + "/sendMessage";
+  String url = "https://murad.serveminecraft.net:8443/bot" + String(BOT_TOKEN) + "/sendMessage";
+  //String url = "https://api.telegram.org/bot" + String(BOT_TOKEN) + "/sendMessage";
 
   if (https.begin(*client, url)) {
     https.addHeader("Content-Type", "application/json");
 
     String payload = "{\"chat_id\":\"" + String(CHAT_ID) + "\", \"text\":\"" + message + "\", \"parse_mode\":\"HTML\"}";
+    //String payload = "{\"chat_id\":\"" + String(CHAT_ID) + "\", \"text\":\"" + message + "\"}";
+
     int httpCode = https.POST(payload.c_str());
 
     if (httpCode > 0) {
-      Serial.println("Сообщение отправлено в Telegram");
+      Serial.println("Сообщение отправлено в Telegram \n");
     } else {
       Serial.printf("Ошибка отправки: %s\n", https.errorToString(httpCode).c_str());
     }
