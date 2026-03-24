@@ -23,3 +23,33 @@
 
 ![photo_2026-03-20_16-15-53.jpg](images/photo_2026-03-20_16-15-53.jpg)
 ![photo_2026-03-20_16-15-58.jpg](images/photo_2026-03-20_16-15-58.jpg)
+
+
+Промежуточный сервер для работы telegramm
+
+сервер `murad.serveminecraft.net`
+
+YНастройки nginx:
+
+```
+server {
+    listen 8443 ssl;
+    server_name murad.serveminecraft.net;
+
+    ssl_certificate     /etc/letsencrypt/live/murad.serveminecraft.net/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/murad.serveminecraft.net/privkey.pem;
+
+    location / {
+        proxy_pass https://api.telegram.org;
+
+        proxy_ssl_server_name on;
+        proxy_set_header Host api.telegram.org;
+
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+
+        proxy_connect_timeout 10s;
+        proxy_read_timeout 30s;
+    }
+}
+```
